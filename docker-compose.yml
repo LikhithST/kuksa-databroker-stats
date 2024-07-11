@@ -25,7 +25,7 @@ services:
     depends_on:
     - kuksa-databroker
   kuksa-databroker:
-    image: kuksa-databroker
+    image: rekocd/kuksa-databroker:latest
     container_name: kuksa-databroker-instance
     network_mode: host
     stdin_open: true
