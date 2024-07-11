@@ -3,4 +3,6 @@
 
 ### Run Data Broker
 
+`cd kuksa-databroker`
+
 `docker compose up kuksa-databroker`
