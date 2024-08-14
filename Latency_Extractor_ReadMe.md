@@ -16,7 +16,7 @@ First, you need to build the Docker image for the Kuksa Data Broker. Open your t
 
 #### prerequisites before building the image
 
-refer and install: https://github.com/eclipse-kuksa/kuksa-common/tree/main/sbom-tools
+refer and install: https://github.com/eclipse-kuksa/kuksa-common/tree/main/sbom-tools  
 scripts: https://github.com/LikhithST/kuksa-databroker/tree/main/scripts
 
 
