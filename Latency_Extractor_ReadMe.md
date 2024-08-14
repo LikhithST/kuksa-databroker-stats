@@ -26,7 +26,7 @@ scripts: https://github.com/LikhithST/kuksa-databroker/tree/main/scripts
  
  ./scripts/build-databroker.sh amd64                # can use: arm64 amd64 riscv64
 
- docker buildx build --platform linux/amd64 -f scripts/Dockerfile . -t kuksa-databroker
+ docker buildx build --platform linux/amd64 -f scripts/Dockerfile -t kuksa-databroker . 
 ```
 
 This command will build the Docker image and tag it as `kuksa-databroker`.
