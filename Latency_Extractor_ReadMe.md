@@ -19,11 +19,11 @@ First, you need to build the Docker image for the Kuksa Data Broker. Open your t
 refer and install: https://github.com/eclipse-kuksa/kuksa-common/tree/main/sbom-tools  
 scripts: https://github.com/LikhithST/kuksa-databroker/tree/main/scripts
 
-
 ```sh
+ export KUKSA_DATABROKER_SBOM="y"
  export KUKSA_DATABROKER_FEATURES="databroker/stats" 
-
- ./build-databroker.sh amd64 
+ ./scripts/build-databroker.sh amd64 // arm64 amd64 riscv64
+ docker buildx build --platform linux/amd64 -f scripts/Dockerfile . -t kuksa-databroker
 ```
 
 This command will build the Docker image and tag it as `kuksa-databroker`.
