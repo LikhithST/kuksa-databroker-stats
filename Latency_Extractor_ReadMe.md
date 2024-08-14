@@ -21,8 +21,11 @@ scripts: https://github.com/LikhithST/kuksa-databroker/tree/main/scripts
 
 ```sh
  export KUKSA_DATABROKER_SBOM="y"
- export KUKSA_DATABROKER_FEATURES="databroker/stats" 
- ./scripts/build-databroker.sh amd64 // arm64 amd64 riscv64
+
+ export KUKSA_DATABROKER_FEATURES="databroker/stats"
+ 
+ ./scripts/build-databroker.sh amd64                # can use: arm64 amd64 riscv64
+
  docker buildx build --platform linux/amd64 -f scripts/Dockerfile . -t kuksa-databroker
 ```
 
