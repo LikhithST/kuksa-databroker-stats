@@ -21,7 +21,7 @@ scripts: https://github.com/LikhithST/kuksa-databroker/tree/main/scripts
 
 
 ```sh
- export KUKSA_DATABROKER_FEATURES="stats" 
+ export KUKSA_DATABROKER_FEATURES="databroker/stats" 
 
  ./build-databroker.sh amd64 
 ```
