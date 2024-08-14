@@ -14,8 +14,16 @@ Before you begin, ensure you have the following installed on your system:
 
 First, you need to build the Docker image for the Kuksa Data Broker. Open your terminal and navigate to the directory containing the Dockerfile and run the following command:
 
+#### prerequisites before building the image
+
+refer and install: https://github.com/eclipse-kuksa/kuksa-common/tree/main/sbom-tools
+scripts: https://github.com/LikhithST/kuksa-databroker/tree/main/scripts
+
+
 ```sh
-docker build -t kuksa-databroker .
+ export KUKSA_DATABROKER_FEATURES="stats" 
+
+ ./build-databroker.sh amd64 
 ```
 
 This command will build the Docker image and tag it as `kuksa-databroker`.
