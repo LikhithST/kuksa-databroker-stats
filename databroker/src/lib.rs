@@ -35,10 +35,10 @@ pub fn init_logging() {
         // If no environment variable set, this is the default
         EnvFilter::new("info")
     });
-    tracing_subscriber::fmt::Subscriber::builder()
+    let _ = tracing_subscriber::fmt::Subscriber::builder()
         .with_env_filter(filter)
         .try_init()
-        .expect("Unable to install global logging subscriber");
+        .is_err();
 
     info!("{}", output);
 }

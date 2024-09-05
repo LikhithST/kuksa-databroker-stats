@@ -27,6 +27,13 @@ use tokio::signal::unix::{signal, SignalKind};
 use tracing::warn;
 use tracing::{debug, error, info};
 
+mod open_telemetry;
+use opentelemetry::global;
+use opentelemetry::sdk::propagation::TraceContextPropagator;
+use opentelemetry::trace::TraceError;
+use tracing_subscriber::layer::SubscriberExt;
+use crate::open_telemetry::init_trace;
+
 use clap::{Arg, ArgAction, Command};
 
 #[cfg(feature = "viss")]
@@ -316,6 +323,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         option_env!("CARGO_PKG_VERSION").unwrap_or(""),
         option_env!("VERGEN_CARGO_DEBUG").unwrap_or(""),
     );
+
+    global::set_text_map_propagator(TraceContextPropagator::new());
+    let tracer = init_trace().unwrap();
+    let telemetry = tracing_opentelemetry::layer().with_tracer(tracer);
+    let subscriber = tracing_subscriber::Registry::default().with(telemetry);
+    tracing::subscriber::set_global_default(subscriber).unwrap();
 
     let mut parser = Command::new("Kuksa Databroker");
     parser = parser
