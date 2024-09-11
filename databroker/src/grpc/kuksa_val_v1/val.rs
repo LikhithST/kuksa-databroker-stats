@@ -15,7 +15,6 @@ use std::collections::HashMap;
 use std::collections::HashSet;
 use std::iter::FromIterator;
 use std::pin::Pin;
-
 #[cfg(feature = "stats")]
 use chrono::Utc;
 
@@ -31,6 +30,7 @@ use crate::broker::ReadError;
 use crate::broker::SubscriptionError;
 use crate::glob;
 use crate::permissions::Permissions;
+
 
 #[tonic::async_trait]
 impl proto::val_server::Val for broker::DataBroker {
@@ -355,7 +355,8 @@ impl proto::val_server::Val for broker::DataBroker {
     }
 
     #[cfg(feature="stats")]
-    #[tracing::instrument]
+    // #[tracing::instrument]
+    #[tracing::instrument(name = "custom_operation", fields(sparta = true))]
     async fn set(
         &self,
         request: tonic::Request<proto::SetRequest>,
@@ -900,7 +901,7 @@ impl broker::EntryUpdate {
 
 #[cfg(feature="stats")]
 impl broker::EntryUpdate {
-    #[tracing::instrument]
+    #[tracing::instrument(name = "custom_operation_from", fields(sparta = true, trace_id = %crate::get_trace_id(&fields, entry)))]
     fn from_proto_entry_and_fields(
         entry: &proto::DataEntry,
         fields: HashSet<proto::Field>,

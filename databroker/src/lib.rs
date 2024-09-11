@@ -50,7 +50,24 @@ pub fn init_logging() {
     info!("{}", output);
 }
 
-pub fn getTraceID(fields: HashSet<proto::Field>)-> string{
 
-    "";
+pub fn get_trace_id(fields: &HashSet<proto::Field>, entry: &proto::DataEntry) -> String {
+    // Check if the `MetadataDescription` field is in the set
+    let metadata_des = if fields.contains(&proto::Field::MetadataDescription) {
+        // Try to get the metadata, and if found, try to get the description
+        match &entry.metadata {
+            Some(metadata) => match &metadata.description {
+                Some(description) => Some(description.clone()), // Clone the description
+                None => None,
+            },
+            None => None,
+        }
+    } else {
+        None
+    };
+
+    // Return the description or an empty string if it's not found
+    metadata_des.unwrap_or_else(|| "".to_string())
+    // String::from("Hello_worls")
 }
+
