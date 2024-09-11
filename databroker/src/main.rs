@@ -305,6 +305,7 @@ async fn read_metadata_file<'a, 'b>(
 }
 
 #[tokio::main]
+#[tracing::instrument]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let version = option_env!("CARGO_PKG_VERSION").unwrap_or_default();
 

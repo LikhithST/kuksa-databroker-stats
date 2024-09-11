@@ -355,6 +355,7 @@ impl proto::val_server::Val for broker::DataBroker {
     }
 
     #[cfg(feature="stats")]
+    #[tracing::instrument]
     async fn set(
         &self,
         request: tonic::Request<proto::SetRequest>,
@@ -659,6 +660,13 @@ impl proto::val_server::Val for broker::DataBroker {
     }
 }
 
+// impl fmt::Debug for dyn Stream{
+//     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+//         write!(f,"id: {}", self.id)
+//     }
+// }
+
+// #[tracing::instrument]
 fn convert_to_proto_stream(
     input: impl Stream<Item = broker::EntryUpdates>,
 ) -> impl Stream<Item = Result<proto::SubscribeResponse, tonic::Status>> {
@@ -892,6 +900,7 @@ impl broker::EntryUpdate {
 
 #[cfg(feature="stats")]
 impl broker::EntryUpdate {
+    #[tracing::instrument]
     fn from_proto_entry_and_fields(
         entry: &proto::DataEntry,
         fields: HashSet<proto::Field>,
@@ -928,8 +937,8 @@ impl broker::EntryUpdate {
         //     println!("--field--{:?}", field)
         // }
 
-        // println!("-------{:?}---",datapoint);
-        // println!("------metatata-{:?}---",metadata_des);
+        println!("-------{:?}---",datapoint);
+        println!("------metatata-{:?}---",metadata_des);
         Self {
             subscription_id:None,
             path: None,

@@ -12,6 +12,7 @@
 ********************************************************************************/
 
 use crate::permissions::{PermissionError, Permissions};
+use std::fmt::Debug;
 pub use crate::types;
 
 use crate::query;
@@ -90,8 +91,9 @@ pub enum Field {
     ActuatorTarget,
     MetadataUnit,
 }
-
 #[derive(Default)]
+#[derive(Debug)]
+
 pub struct Database {
     next_id: AtomicI32,
     path_to_id: HashMap<String, i32>,
@@ -99,6 +101,7 @@ pub struct Database {
 }
 
 #[derive(Default)]
+#[derive(Debug)]
 pub struct Subscriptions {
     query_subscriptions: Vec<QuerySubscription>,
     change_subscriptions: Vec<ChangeSubscription>,
@@ -138,7 +141,7 @@ pub enum SubscriptionError {
     InvalidInput,
     InternalError,
 }
-
+#[derive(Debug)]
 #[derive(Clone)]
 pub struct DataBroker {
     database: Arc<RwLock<Database>>,
@@ -147,6 +150,7 @@ pub struct DataBroker {
     shutdown_trigger: broadcast::Sender<()>,
 }
 
+#[derive(Debug)]
 pub struct QuerySubscription {
     query: query::CompiledQuery,
     sender: mpsc::Sender<QueryResponse>,
@@ -154,12 +158,14 @@ pub struct QuerySubscription {
 }
 
 #[cfg(not(feature="stats"))]
+#[derive(Debug)]
 pub struct ChangeSubscription {
     entries: HashMap<i32, HashSet<Field>>,
     sender: mpsc::Sender<EntryUpdates>,
     permissions: Permissions,
 }
 #[cfg(feature="stats")]
+#[derive(Debug)]
 pub struct ChangeSubscription {
     subscription_id: String,
     entries: HashMap<i32, HashSet<Field>>,
@@ -1401,6 +1407,8 @@ impl<'a, 'b> query::CompilationInput for DatabaseReadAccess<'a, 'b> {
     }
 }
 
+#[derive(Debug)]
+
 pub struct AuthorizedAccess<'a, 'b> {
     broker: &'a DataBroker,
     permissions: &'b Permissions,
@@ -1444,6 +1452,7 @@ impl<'a, 'b> AuthorizedAccess<'a, 'b> {
             .authorized_read_access(self.permissions))
     }
 
+    #[tracing::instrument]
     pub async fn get_id_by_path(&self, name: &str) -> Option<i32> {
         self.broker
             .database
@@ -1473,7 +1482,8 @@ impl<'a, 'b> AuthorizedAccess<'a, 'b> {
             .get_entry_by_path(name)
             .map(|entry| entry.datapoint.clone())
     }
-
+    
+    #[tracing::instrument]
     pub async fn get_metadata(&self, id: i32) -> Option<Metadata> {
         self.broker
             .database
@@ -1549,9 +1559,10 @@ impl<'a, 'b> AuthorizedAccess<'a, 'b> {
             .collect()
     }
 
+#[tracing::instrument]
     pub async fn update_entries(
         &self,
-        updates: impl IntoIterator<Item = (i32, EntryUpdate)>,
+        updates: impl IntoIterator<Item = (i32, EntryUpdate)> + Debug,
     ) -> Result<(), Vec<(i32, UpdateError)>> {
         let mut errors = Vec::new();
         let mut db = self.broker.database.write().await;

@@ -11,6 +11,13 @@
 * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
+use std::collections::HashMap;
+use std::collections::HashSet;
+use std::iter::FromIterator;
+use std::pin::Pin;
+use std::string;
+use databroker_proto::kuksa::val::v1 as proto;
+
 pub mod authorization;
 pub mod broker;
 pub mod glob;
@@ -41,4 +48,9 @@ pub fn init_logging() {
         .is_err();
 
     info!("{}", output);
+}
+
+pub fn getTraceID(fields: HashSet<proto::Field>)-> string{
+
+    "";
 }
