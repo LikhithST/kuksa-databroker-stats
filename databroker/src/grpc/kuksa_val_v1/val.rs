@@ -356,7 +356,7 @@ impl proto::val_server::Val for broker::DataBroker {
 
     #[cfg(feature="stats")]
     // #[tracing::instrument]
-    #[tracing::instrument(name = "custom_operation", fields(sparta = true))]
+    #[tracing::instrument(name = "custom_operation_set", fields(sparta = true))]
     async fn set(
         &self,
         request: tonic::Request<proto::SetRequest>,
@@ -539,6 +539,7 @@ impl proto::val_server::Val for broker::DataBroker {
         >,
     >;
 
+    #[tracing::instrument(name = "custom_operation_subscribe", fields(sparta = true))]
     async fn subscribe(
         &self,
         request: tonic::Request<proto::SubscribeRequest>,
@@ -667,10 +668,10 @@ impl proto::val_server::Val for broker::DataBroker {
 //     }
 // }
 
-// #[tracing::instrument]
+#[tracing::instrument(name = "custom_operation_convert_to_proto_stream", fields(sparta = true))]
 fn convert_to_proto_stream(
-    input: impl Stream<Item = broker::EntryUpdates>,
-) -> impl Stream<Item = Result<proto::SubscribeResponse, tonic::Status>> {
+    input: impl Stream<Item = broker::EntryUpdates> + std::fmt::Debug,
+) -> impl Stream<Item = Result<proto::SubscribeResponse, tonic::Status>>  {
     input.map(move |item| {
         let mut updates = Vec::new();
         for update in item.updates {

@@ -644,6 +644,7 @@ impl Subscriptions {
         self.query_subscriptions.push(subscription)
     }
 
+    #[tracing::instrument(name = "custom_operation_broker_add_change_subscription", fields(sparta = true))]
     pub fn add_change_subscription(&mut self, subscription: ChangeSubscription) {
         info!("<<<< subscriber added >>>>");
         self.change_subscriptions.push(subscription)
@@ -1559,7 +1560,7 @@ impl<'a, 'b> AuthorizedAccess<'a, 'b> {
             .collect()
     }
 
-#[tracing::instrument]
+    #[tracing::instrument(name = "custom_broker_update_entries", fields(sparta = true))]
     pub async fn update_entries(
         &self,
         updates: impl IntoIterator<Item = (i32, EntryUpdate)> + Debug,
@@ -1667,10 +1668,11 @@ impl<'a, 'b> AuthorizedAccess<'a, 'b> {
        
     
     #[cfg(feature="stats")]
+    #[tracing::instrument(name = "custom_operation_broker_subscribe", fields(sparta = true))]
     pub async fn subscribe(
         &self,
         valid_entries: HashMap<i32, HashSet<Field>>,
-    ) -> Result<impl Stream<Item = EntryUpdates>, SubscriptionError> {
+    ) -> Result<impl Stream<Item = EntryUpdates> + std::fmt::Debug, SubscriptionError> {
         if valid_entries.is_empty() {
             return Err(SubscriptionError::InvalidInput);
         }
