@@ -22,7 +22,7 @@ use databroker_proto::kuksa::val::v1 as proto;
 use databroker_proto::kuksa::val::v1::DataEntryError;
 use tokio_stream::Stream;
 use tokio_stream::StreamExt;
-use tracing::debug;
+use tracing::{error, event, info, Level, warn, span, debug};
 
 use crate::broker;
 use crate::broker::EntryReadAccess;
@@ -354,13 +354,15 @@ impl proto::val_server::Val for broker::DataBroker {
         }))
     }
 
+
+
     #[cfg(feature="stats")]
     // #[tracing::instrument]
-    #[tracing::instrument(name = "custom_operation_set", fields(sparta = true))]
     async fn set(
         &self,
         request: tonic::Request<proto::SetRequest>,
     ) -> Result<tonic::Response<proto::SetResponse>, tonic::Status> {
+
             
             let set_enter = match  Utc::now().timestamp_nanos_opt(){
             Some(value) => value.to_string(),
@@ -371,6 +373,15 @@ impl proto::val_server::Val for broker::DataBroker {
                 println!("Error parsing string to i64");
                 0 // Default value if parsing fails
             });
+
+            let (trace_id, request) = read_incoming_trace_id(request);
+            println!("----trace_id---{}", trace_id);
+
+        
+
+            let set_span = span!(Level::INFO, "custom_set_span", trace_id = %trace_id);
+            let _gaurd = set_span.enter();
+
 
         let permissions = match request.extensions().get::<Permissions>() {
             Some(permissions) => {
@@ -539,7 +550,6 @@ impl proto::val_server::Val for broker::DataBroker {
         >,
     >;
 
-    #[tracing::instrument(name = "custom_operation_subscribe", fields(sparta = true))]
     async fn subscribe(
         &self,
         request: tonic::Request<proto::SubscribeRequest>,
@@ -864,6 +874,29 @@ fn combine_view_and_fields(
 
     combined
 }
+
+fn read_incoming_trace_id(request: tonic::Request<proto::SetRequest>) -> (String, tonic::Request<proto::SetRequest>){
+    let mut trace_id: String = String::from(""); 
+    let request_copy = tonic::Request::new(request.get_ref().clone());
+    for request in request_copy.into_inner().updates {
+        match &request.entry {
+            Some(entry) =>  match &entry.metadata {
+                Some(metadata) => match &metadata.description{
+                    Some(description)=> {
+                        trace_id = String::from(description);
+                    }
+                None => trace_id = String::from("")
+                }
+                None => trace_id = String::from("")
+            }
+            None => trace_id = String::from("")
+        }
+    }
+
+    return(trace_id, request);
+    
+}
+
 
 #[cfg(not(feature="stats"))]
 impl broker::EntryUpdate {

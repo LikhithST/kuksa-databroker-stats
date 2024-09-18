@@ -30,7 +30,7 @@ use tracing::{debug, error, info};
 mod open_telemetry;
 use opentelemetry::global;
 use opentelemetry::sdk::propagation::TraceContextPropagator;
-use opentelemetry::trace::TraceError;
+// use opentelemetry::trace::TraceError;
 use tracing_subscriber::layer::SubscriberExt;
 use crate::open_telemetry::init_trace;
 
@@ -328,7 +328,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     global::set_text_map_propagator(TraceContextPropagator::new());
     let tracer = init_trace().unwrap();
     let telemetry = tracing_opentelemetry::layer().with_tracer(tracer);
-    let subscriber = tracing_subscriber::Registry::default().with(telemetry);
+    let subscriber = tracing_subscriber::FmtSubscriber::builder()
+    .with_max_level(tracing::Level::INFO) // Adjust logging level here
+    .finish()
+    .with(telemetry);
     tracing::subscriber::set_global_default(subscriber).unwrap();
 
     let mut parser = Command::new("Kuksa Databroker");
