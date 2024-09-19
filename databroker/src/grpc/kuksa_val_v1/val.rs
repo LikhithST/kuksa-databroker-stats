@@ -550,6 +550,7 @@ impl proto::val_server::Val for broker::DataBroker {
         >,
     >;
 
+    #[tracing::instrument(name="subscribe")]
     async fn subscribe(
         &self,
         request: tonic::Request<proto::SubscribeRequest>,

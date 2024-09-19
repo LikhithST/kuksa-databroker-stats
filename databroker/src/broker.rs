@@ -1636,7 +1636,7 @@ impl<'a, 'b> AuthorizedAccess<'a, 'b> {
     pub async fn subscribe(
         &self,
         valid_entries: HashMap<i32, HashSet<Field>>,
-    ) -> Result<impl Stream<Item = EntryUpdates>, SubscriptionError> {
+    ) -> Result<impl Stream<Item = EntryUpdates> + std::fmt::Debug, SubscriptionError> {
         if valid_entries.is_empty() {
             return Err(SubscriptionError::InvalidInput);
         }
