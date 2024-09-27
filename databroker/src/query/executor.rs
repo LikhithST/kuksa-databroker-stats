@@ -157,6 +157,8 @@ impl CompiledQuery {
             Ok(None)
         }
     }
+
+    // #[tracing::instrument(name="executor_execute")]
     pub fn execute(
         &self,
         input: &impl ExecutionInput,
@@ -396,6 +398,7 @@ impl ExecutionInput for ExecutionInputImpl {
         }
     }
 
+    // #[tracing::instrument(name="executor_get_fields")]
     fn get_fields(&self) -> &HashMap<String, ExecutionInputImplData> {
         &self.fields
     }

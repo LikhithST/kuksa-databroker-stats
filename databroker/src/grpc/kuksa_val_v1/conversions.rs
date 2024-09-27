@@ -12,7 +12,8 @@
 ********************************************************************************/
 
 use databroker_proto::kuksa::val::v1 as proto;
-
+#[cfg(feature = "stats")]
+use chrono::Utc;
 use crate::broker;
 
 use std::convert::TryFrom;
@@ -236,6 +237,7 @@ impl From<broker::DataValue> for Option<proto::Datapoint> {
 }
 
 impl From<Option<proto::datapoint::Value>> for broker::DataValue {
+    #[tracing::instrument(name="conversions_From<Option<proto::datapoint::Value>>", fields( timestamp=Utc::now().to_string()))]
     fn from(from: Option<proto::datapoint::Value>) -> Self {
         match from {
             Some(value) => match value {
@@ -300,6 +302,7 @@ impl TryFrom<&proto::Field> for broker::Field {
 }
 
 impl From<proto::Datapoint> for broker::Datapoint {
+    #[tracing::instrument(name="conversions_From<proto::Datapoint>", fields( timestamp=Utc::now().to_string()))]
     fn from(from: proto::Datapoint) -> Self {
         Self {
             ts: SystemTime::now(),

@@ -212,7 +212,7 @@ impl Permissions {
         }
         Err(PermissionError::Denied)
     }
-
+// #[tracing::instrument(name="permissions_expired")]
     #[inline]
     pub fn expired(&self) -> Result<(), PermissionError> {
         if let Some(expires_at) = self.expires_at {

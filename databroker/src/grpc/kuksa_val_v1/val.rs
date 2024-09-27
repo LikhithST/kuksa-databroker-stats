@@ -375,11 +375,10 @@ impl proto::val_server::Val for broker::DataBroker {
             });
 
             let (trace_id, request) = read_incoming_trace_id(request);
-            println!("----trace_id---{}", trace_id);
 
         
 
-            let set_span = span!(Level::INFO, "custom_set_span", trace_id = %trace_id);
+            let set_span = span!(Level::INFO, "val_set", trace_id = %trace_id, timestamp=Utc::now().to_string());
             let _gaurd = set_span.enter();
 
 
@@ -550,7 +549,7 @@ impl proto::val_server::Val for broker::DataBroker {
         >,
     >;
 
-    #[tracing::instrument(name="subscribe")]
+    #[tracing::instrument(name="subscribe", fields( timestamp=Utc::now().to_string()))]
     async fn subscribe(
         &self,
         request: tonic::Request<proto::SubscribeRequest>,
@@ -679,7 +678,7 @@ impl proto::val_server::Val for broker::DataBroker {
 //     }
 // }
 
-#[tracing::instrument(name = "custom_operation_convert_to_proto_stream", fields(sparta = true))]
+#[tracing::instrument(name = "custom_operation_convert_to_proto_stream", fields( timestamp=Utc::now().to_string()))]
 fn convert_to_proto_stream(
     input: impl Stream<Item = broker::EntryUpdates> + std::fmt::Debug,
 ) -> impl Stream<Item = Result<proto::SubscribeResponse, tonic::Status>>  {
@@ -936,7 +935,7 @@ impl broker::EntryUpdate {
 
 #[cfg(feature="stats")]
 impl broker::EntryUpdate {
-    #[tracing::instrument(name = "custom_operation_from", fields(sparta = true, trace_id = %crate::get_trace_id(&fields, entry)))]
+    #[tracing::instrument(name = "val_from_proto_entry_and_fields", fields( timestamp=Utc::now().to_string()))]
     fn from_proto_entry_and_fields(
         entry: &proto::DataEntry,
         fields: HashSet<proto::Field>,
@@ -973,8 +972,8 @@ impl broker::EntryUpdate {
         //     println!("--field--{:?}", field)
         // }
 
-        println!("-------{:?}---",datapoint);
-        println!("------metatata-{:?}---",metadata_des);
+        // println!("-------{:?}---",datapoint);
+        // println!("------metatata-{:?}---",metadata_des);
         Self {
             subscription_id:None,
             path: None,

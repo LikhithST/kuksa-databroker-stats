@@ -13,6 +13,8 @@
 
 use lazy_static::lazy_static;
 use regex::Regex;
+#[cfg(feature = "stats")]
+use chrono::Utc;
 
 #[derive(Debug)]
 pub enum Error {
@@ -66,6 +68,7 @@ pub fn to_regex_string(glob: &str) -> String {
     re
 }
 
+#[tracing::instrument(name="glob_to_regex", fields( timestamp=Utc::now().to_string()))]
 pub fn to_regex(glob: &str) -> Result<Regex, Error> {
     let re = to_regex_string(glob);
     Regex::new(&re).map_err(|_err| Error::RegexError)
@@ -101,6 +104,8 @@ lazy_static! {
     .expect("regex compilation (of static pattern) should always succeed");
 }
 
+
+#[tracing::instrument(name="glob_is_valid_pattern", fields( timestamp=Utc::now().to_string()))]
 pub fn is_valid_pattern(input: &str) -> bool {
     REGEX_VALID_PATTERN.is_match(input)
 }

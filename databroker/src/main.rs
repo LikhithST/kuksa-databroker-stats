@@ -11,6 +11,7 @@
 * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
+use tracing_subscriber::Layer;
 #[cfg(feature = "jemalloc")]
 #[global_allocator]
 static ALLOC: jemallocator::Jemalloc = jemallocator::Jemalloc;
@@ -305,7 +306,7 @@ async fn read_metadata_file<'a, 'b>(
 }
 
 #[tokio::main]
-#[tracing::instrument]
+// #[tracing::instrument]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let version = option_env!("CARGO_PKG_VERSION").unwrap_or_default();
 
@@ -325,14 +326,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         option_env!("VERGEN_CARGO_DEBUG").unwrap_or(""),
     );
 
-    global::set_text_map_propagator(TraceContextPropagator::new());
-    let tracer = init_trace().unwrap();
-    let telemetry = tracing_opentelemetry::layer().with_tracer(tracer);
-    let subscriber = tracing_subscriber::FmtSubscriber::builder()
-    .with_max_level(tracing::Level::INFO) // Adjust logging level here
-    .finish()
-    .with(telemetry);
-    tracing::subscriber::set_global_default(subscriber).unwrap();
 
     let mut parser = Command::new("Kuksa Databroker");
     parser = parser

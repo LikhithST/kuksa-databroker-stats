@@ -28,6 +28,9 @@ use std::sync::atomic::{AtomicI32, Ordering};
 use std::sync::Arc;
 use std::time::SystemTime;
 
+#[cfg(feature = "stats")]
+use chrono::Utc;
+
 use crate::query::{CompiledQuery, ExecutionInput};
 use crate::types::ExecutionInputImplData;
 use tracing::{debug, info, warn};
@@ -644,12 +647,13 @@ impl Subscriptions {
         self.query_subscriptions.push(subscription)
     }
 
-    #[tracing::instrument(name = "custom_operation_broker_add_change_subscription", fields(sparta = true))]
+    #[tracing::instrument(name = "custom_operation_broker_add_change_subscription", fields( timestamp=Utc::now().to_string()))]
     pub fn add_change_subscription(&mut self, subscription: ChangeSubscription) {
         info!("<<<< subscriber added >>>>");
         self.change_subscriptions.push(subscription)
     }
 
+    // #[tracing::instrument(name="broker_subscriptioins_notify")]
     pub async fn notify(
         &self,
         changed: Option<&HashMap<i32, HashSet<Field>>>,
@@ -695,6 +699,7 @@ impl Subscriptions {
         self.change_subscriptions.clear();
     }
 
+    // #[tracing::instrument(name="broker_cleanup")]
     pub fn cleanup(&mut self) {
         self.query_subscriptions.retain(|sub| {
             if sub.sender.is_closed() {
@@ -844,6 +849,7 @@ impl ChangeSubscription {
 
 #[cfg(feature="stats")]
 impl ChangeSubscription {
+    // #[tracing::instrument(name="broker_changesubscription_notify")]
     async fn notify(
         &self,
         changed: Option<&HashMap<i32, HashSet<Field>>>,
@@ -1043,6 +1049,8 @@ impl QuerySubscription {
             }
         }
     }
+
+    // #[tracing::instrument(name="broker_generate_input")]
     fn generate_input(
         &self,
         changed: Option<&HashMap<i32, HashSet<Field>>>,
@@ -1059,6 +1067,7 @@ impl QuerySubscription {
         }
     }
 
+    // #[tracing::instrument(name="broker_querysubscription_notify")]
     async fn notify(
         &self,
         changed: Option<&HashMap<i32, HashSet<Field>>>,
@@ -1102,11 +1111,13 @@ impl QuerySubscription {
     }
 }
 
+#[derive(Debug)]
 pub struct DatabaseReadAccess<'a, 'b> {
     db: &'a Database,
     permissions: &'b Permissions,
 }
 
+#[derive(Debug)]
 pub struct DatabaseWriteAccess<'a, 'b> {
     db: &'a mut Database,
     permissions: &'b Permissions,
@@ -1119,6 +1130,7 @@ pub enum EntryReadAccess<'a> {
 }
 
 impl<'a> EntryReadAccess<'a> {
+    #[tracing::instrument(name="broker_datapoint", fields( timestamp=Utc::now().to_string()))]
     pub fn datapoint(&self) -> Result<&Datapoint, ReadError> {
         match self {
             Self::Entry(entry) => Ok(&entry.datapoint),
@@ -1133,6 +1145,7 @@ impl<'a> EntryReadAccess<'a> {
         }
     }
 
+    #[tracing::instrument(name="broker_metadata", fields( timestamp=Utc::now().to_string()))]
     pub fn metadata(&self) -> &Metadata {
         match self {
             Self::Entry(entry) => &entry.metadata,
@@ -1175,6 +1188,7 @@ impl<'a, 'b> Iterator for EntryReadIterator<'a, 'b> {
 }
 
 impl<'a, 'b> DatabaseReadAccess<'a, 'b> {
+    // #[tracing::instrument(name="broker_get_entry_by_id")]
     pub fn get_entry_by_id(&self, id: i32) -> Result<&Entry, ReadError> {
         match self.db.entries.get(&id) {
             Some(entry) => match self.permissions.can_read(&entry.metadata.path) {
@@ -1193,15 +1207,17 @@ impl<'a, 'b> DatabaseReadAccess<'a, 'b> {
         }
     }
 
+    #[tracing::instrument(name="broker_get_metadata_by_id", fields( timestamp=Utc::now().to_string()))]
     pub fn get_metadata_by_id(&self, id: i32) -> Option<&Metadata> {
         self.db.entries.get(&id).map(|entry| &entry.metadata)
     }
 
+    #[tracing::instrument(name="broker_get_metadata_by_path", fields( timestamp=Utc::now().to_string()))]
     pub fn get_metadata_by_path(&self, path: &str) -> Option<&Metadata> {
         let id = self.db.path_to_id.get(path)?;
         self.get_metadata_by_id(*id)
     }
-
+#[tracing::instrument(name="broker_iter_entries")]
     pub fn iter_entries(&self) -> EntryReadIterator {
         EntryReadIterator {
             inner: self.db.entries.values(),
@@ -1222,6 +1238,7 @@ impl<'a, 'b> DatabaseWriteAccess<'a, 'b> {
         }
     }
 
+    // #[tracing::instrument(name="broker_update_entry_lag_to_be_equal")]
     pub fn update_entry_lag_to_be_equal(&mut self, path: &str) -> Result<(), UpdateError> {
         match self.db.path_to_id.get(path) {
             Some(id) => match self.db.entries.get_mut(id) {
@@ -1235,6 +1252,7 @@ impl<'a, 'b> DatabaseWriteAccess<'a, 'b> {
         }
     }
 
+    // #[tracing::instrument(name="broker_update")]
     pub fn update(&mut self, id: i32, update: EntryUpdate) -> Result<HashSet<Field>, UpdateError> {
         match self.db.entries.get_mut(&id) {
             Some(entry) => {
@@ -1378,6 +1396,7 @@ impl Database {
         }
     }
 
+    #[tracing::instrument(name="broker_authorized_read_access", fields( timestamp=Utc::now().to_string()))]
     pub fn authorized_read_access<'a, 'b>(
         &'a self,
         permissions: &'b Permissions,
@@ -1388,6 +1407,7 @@ impl Database {
         }
     }
 
+    #[tracing::instrument(name="broker_authorized_write_access", fields( timestamp=Utc::now().to_string()))]
     pub fn authorized_write_access<'a, 'b>(
         &'a mut self,
         permissions: &'b Permissions,
@@ -1453,7 +1473,7 @@ impl<'a, 'b> AuthorizedAccess<'a, 'b> {
             .authorized_read_access(self.permissions))
     }
 
-    #[tracing::instrument]
+#[tracing::instrument(name = "broker_get_id_by_path", fields( timestamp=Utc::now().to_string()))]
     pub async fn get_id_by_path(&self, name: &str) -> Option<i32> {
         self.broker
             .database
@@ -1484,7 +1504,7 @@ impl<'a, 'b> AuthorizedAccess<'a, 'b> {
             .map(|entry| entry.datapoint.clone())
     }
     
-    #[tracing::instrument]
+    #[tracing::instrument(name="broker_get_metadata", fields( timestamp=Utc::now().to_string()))]
     pub async fn get_metadata(&self, id: i32) -> Option<Metadata> {
         self.broker
             .database
@@ -1525,6 +1545,7 @@ impl<'a, 'b> AuthorizedAccess<'a, 'b> {
             .cloned()
     }
 
+    #[tracing::instrument(name="broker_for_each_entry", fields( timestamp=Utc::now().to_string()), skip(f))]
     pub async fn for_each_entry(&self, f: impl FnMut(EntryReadAccess)) {
         self.broker
             .database
@@ -1560,7 +1581,7 @@ impl<'a, 'b> AuthorizedAccess<'a, 'b> {
             .collect()
     }
 
-    #[tracing::instrument(name = "custom_broker_update_entries", fields(sparta = true))]
+    #[tracing::instrument(name = "broker_update_entries", fields( timestamp=Utc::now().to_string()))]
     pub async fn update_entries(
         &self,
         updates: impl IntoIterator<Item = (i32, EntryUpdate)> + Debug,
@@ -1668,7 +1689,7 @@ impl<'a, 'b> AuthorizedAccess<'a, 'b> {
        
     
     #[cfg(feature="stats")]
-    #[tracing::instrument(name = "custom_operation_broker_subscribe", fields(sparta = true))]
+    #[tracing::instrument(name = "broker_subscribe", fields( timestamp=Utc::now().to_string()))]
     pub async fn subscribe(
         &self,
         valid_entries: HashMap<i32, HashSet<Field>>,
@@ -1753,6 +1774,7 @@ impl DataBroker {
         }
     }
 
+    #[tracing::instrument(name = "broker_authorized_access", fields( timestamp=Utc::now().to_string()))]
     pub fn authorized_access<'a, 'b>(
         &'a self,
         permissions: &'b Permissions,

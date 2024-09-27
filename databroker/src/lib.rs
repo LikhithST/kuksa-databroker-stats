@@ -29,11 +29,17 @@ pub mod vss;
 
 #[cfg(feature = "viss")]
 pub mod viss;
+pub mod open_telemetry;
 
 use std::fmt::Write;
 
 use tracing::info;
 use tracing_subscriber::filter::EnvFilter;
+use open_telemetry::init_trace;
+use opentelemetry::global;
+use opentelemetry::sdk::propagation::TraceContextPropagator;
+use tracing_subscriber::layer::SubscriberExt;
+
 
 pub fn init_logging() {
     let mut output = String::from("Init logging from RUST_LOG");
@@ -42,32 +48,28 @@ pub fn init_logging() {
         // If no environment variable set, this is the default
         EnvFilter::new("info")
     });
-    let _ = tracing_subscriber::fmt::Subscriber::builder()
-        .with_env_filter(filter)
-        .try_init()
-        .is_err();
+
+       // Set OpenTelemetry trace propagator
+       global::set_text_map_propagator(TraceContextPropagator::new());
+
+       // Initialize OpenTelemetry tracer
+       let tracer = init_trace().expect("Failed to initialize tracer");
+   
+       // Create telemetry layer
+       let telemetry = tracing_opentelemetry::layer().with_tracer(tracer);
+
+    // Set up the tracing subscriber with OpenTelemetry and log formatting
+       let subscriber = tracing_subscriber::fmt::Subscriber::builder()
+        // .with_env_filter(filter)  // Apply environment filter for log level
+        .with_max_level(tracing::Level::INFO)  // You can adjust this log level as needed
+        .finish()
+        .with(telemetry);  // Add telemetry layer
+
+    // Set the subscriber as the global default for tracing
+    tracing::subscriber::set_global_default(subscriber)
+        .expect("Unable to install global logging subscriber");
 
     info!("{}", output);
 }
 
-
-pub fn get_trace_id(fields: &HashSet<proto::Field>, entry: &proto::DataEntry) -> String {
-    // Check if the `MetadataDescription` field is in the set
-    let metadata_des = if fields.contains(&proto::Field::MetadataDescription) {
-        // Try to get the metadata, and if found, try to get the description
-        match &entry.metadata {
-            Some(metadata) => match &metadata.description {
-                Some(description) => Some(description.clone()), // Clone the description
-                None => None,
-            },
-            None => None,
-        }
-    } else {
-        None
-    };
-
-    // Return the description or an empty string if it's not found
-    metadata_des.unwrap_or_else(|| "".to_string())
-    // String::from("Hello_worls")
-}
 
